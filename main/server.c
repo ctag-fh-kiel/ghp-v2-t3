@@ -1,4 +1,5 @@
 #include "server.h"
+#include "index.html.h"
 
 struct mg_mgr mgr;
 struct mg_connection *nc;
@@ -12,31 +13,47 @@ static esp_err_t event_handler(void *ctx, system_event_t *event) {
   return ESP_OK;
 }
 
-static void mg_ev_handler(struct mg_connection *nc, int ev, void *p) {
-  static const char *reply_fmt =
+static void mg_ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
+    static const char *reply_fmt =
       "HTTP/1.0 200 OK\r\n"
       "Connection: close\r\n"
-      "Content-Type: text/plain\r\n"
+      "Content-Type: text/html\r\n"
       "\r\n"
-      "Hello %s\n";
+      "%s\n";
+    static const char *json_fmt = 
+      "HTTP/1.0 200 OK\r\n"
+      "Connection: close\r\n"
+      "Content-Type: application/json\r\n"
+      "\r\n"
+      "%s\n";
+    struct http_message *hm = (struct http_message *) ev_data;
 
   switch (ev) {
     case MG_EV_ACCEPT: {
       char addr[32];
       mg_sock_addr_to_str(&nc->sa, addr, sizeof(addr),
                           MG_SOCK_STRINGIFY_IP | MG_SOCK_STRINGIFY_PORT);
-      printf("Connection %p from %s\n", nc, addr);
+      //printf("Connection %p from %s\n", nc, addr);
       break;
     }
     case MG_EV_HTTP_REQUEST: {
-      char addr[32];
-      struct http_message *hm = (struct http_message *) p;
-      mg_sock_addr_to_str(&nc->sa, addr, sizeof(addr),
-                          MG_SOCK_STRINGIFY_IP | MG_SOCK_STRINGIFY_PORT);
-      printf("HTTP request from %s: %.*s %.*s\n", addr, (int) hm->method.len,
-             hm->method.p, (int) hm->uri.len, hm->uri.p);
-      mg_printf(nc, reply_fmt, addr);
-      nc->flags |= MG_F_SEND_AND_CLOSE;
+        // message of the day (mod) route
+      if (mg_vcmp(&hm->uri, "/mod") == 0) {
+        char mod[100], buf[100];
+        mg_get_http_var(&hm->body, "mod", mod, sizeof(mod));
+        ESP_LOGI("server", "received mod: %s", mod);
+        snprintf(buf, 100, "{ \"mod\": \"%s\"}%c", mod, '\0');
+        mg_printf(nc, json_fmt, buf);
+        nc->flags |= MG_F_SEND_AND_CLOSE;
+      }else{
+        char addr[32];
+        mg_sock_addr_to_str(&nc->sa, addr, sizeof(addr),
+                            MG_SOCK_STRINGIFY_IP | MG_SOCK_STRINGIFY_PORT);
+        printf("HTTP request from %s: %.*s %.*s\n", addr, (int) hm->method.len,
+                hm->method.p, (int) hm->uri.len, hm->uri.p);
+        mg_printf(nc, reply_fmt, main_index_html);
+        nc->flags |= MG_F_SEND_AND_CLOSE;
+      }
       break;
     }
     case MG_EV_CLOSE: {
@@ -72,5 +89,4 @@ void start_server(){
     mg_set_protocol_http_websocket(nc);
 
     xTaskCreate(&main_task, "main_task", 4096, NULL, 5, NULL);
-
 }

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<!-- xxd -i -a index.html > index.html.h -->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>RESTful API demo</title>
+</style>
+
+<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+<script language="javascript" type="text/javascript">
+  jQuery(function() {
+    $(document).on('keyup', '#mod', function() {
+      $.ajax({
+        url: '/mod',
+        method: 'POST',
+        dataType: 'json',
+        data: { mod: $('#mod').val() },
+        success: function(json) {
+          $('#result').html(json.result);
+        }
+      });
+    });
+  });
+</script>
+</head>
+<body>
+  <div class="content">
+    <h1>RESTful API demo.</h1>
+    <p>
+      Sending a message of the day
+    </p>
+    <div>
+      <label>Message of the day:</label> <input type="text" id="mod" />
+    </div>
+    <div>
+     <label>Result:</label> <span id="result">&nbsp;</span>
+    </div>
+  </div>
+</body>
+</html>
