@@ -17,21 +17,14 @@
 #include "globals.h"
 #include "wifi_svc.h"
 #include "mdns_svc.h"
+#include "server.h"
 
-static void main_task(void *pvParameters)
-{
-    /* Wait for the callback to set the CONNECTED_BIT in the event group. */
-    xEventGroupWaitBits(wifi_event_group, IP4_CONNECTED_BIT | IP6_CONNECTED_BIT, false, true, portMAX_DELAY);
-    ESP_LOGI("main", "Entering main task");
-    while(1) {
-        vTaskDelay(50 / portTICK_PERIOD_MS);
-    }
-}
+
 
 void app_main()
 {
     ESP_ERROR_CHECK( nvs_flash_init() );
     initialise_mdns();
     initialise_wifi();
-    xTaskCreate(&main_task, "main_task", 2048, NULL, 5, NULL);
+    start_server();
 }
