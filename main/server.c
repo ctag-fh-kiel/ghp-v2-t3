@@ -50,7 +50,7 @@ static void mg_ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
     break;
   }
   case MG_EV_CLOSE: {
-    printf("Connection %p closed\n", nc);
+    //printf("Connection %p closed\n", nc);
     break;
   }
   }

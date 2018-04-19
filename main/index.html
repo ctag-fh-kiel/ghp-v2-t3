@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- convert to c header file with -->
 <!-- xxd -i -a index.html > index.html.h -->
 <html lang="en">
 <head>
@@ -16,7 +17,7 @@
         dataType: 'json',
         data: { mod: $('#mod').val() },
         success: function(json) {
-          $('#result').html(json.result);
+          $('#result').html(json.mod);
         }
       });
     });
